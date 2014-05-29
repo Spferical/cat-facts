@@ -5,6 +5,7 @@ import email
 import smtplib
 import imaplib
 import textwrap
+from email.utils import parseaddr
 from email.MIMEText import MIMEText
 
 
@@ -269,6 +270,10 @@ def reply():
         message = email.message_from_string(raw_email)
         # with it, get who sent the email
         sender = message['From']
+
+        # extract /just/ the plain address from the address
+        # e.g. foo@gmail.com instead of Foo Bar <foo@gmail.com>
+        sender = parseaddr(sender)[1]
 
         # debug printing
         print "Got email! Sender=" + sender
