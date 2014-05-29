@@ -100,7 +100,8 @@ def get_email_recipients():
         if line[0] == '#':
             continue
 
-        recipients.append(line)
+        # add the entire line, minus the newline at the end
+        recipients.append(line[:-1])
 
     file.close()
     return recipients
