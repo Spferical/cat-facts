@@ -343,14 +343,18 @@ def main():
     from sys import argv
     action = argv[1]
     if action == 'send':
+        print 'catfacts sending at %s' % datetime.datetime.now()
         send_fact()
     elif action == 'reply':
+        print 'catfacts replying at %s' % datetime.datetime.now()
         reply()
     elif action == 'invite_text':
+        print 'catfacts inviting text at %s' % datetime.datetime.now()
         number = argv[2]
         provider = argv[3]
         invite_number(number, provider)
     elif action == 'invite_email':
+        print 'catfacts inviting email at %s' % datetime.datetime.now()
         email = argv[2]
         invite_email(email)
 
