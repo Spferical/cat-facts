@@ -167,6 +167,7 @@ def mail(username, to, text, subject, mail_server):
 
 
 def send_invite(username, email_or_number, provider, mail_server):
+    print 'sending invite to', email_or_number, provider
     if provider == 'email':
         email = email_or_number
         subject = "Cat Facts"
@@ -301,7 +302,6 @@ def reply():
                 add_phone_recipient_to_file(number, provider)
                 phone_recipients.append((number, provider))
                 # also give them a welcome message!
-                print 'sending invite to', sender
                 send_invite(username, number, provider,  mail_server)
             else:
                 # this person emailed, probably
@@ -309,7 +309,6 @@ def reply():
                 add_email_recipient_to_file(sender)
                 email_recipients.append(sender)
                 # also give them a welcome message!
-                print 'sending invite to', sender
                 send_invite(username, sender, 'email', mail_server)
 
 
@@ -325,6 +324,21 @@ def reply():
     imap_mail.close()
     imap_mail.logout()
 
+
+def invite_number(number, provider):
+    username, password = get_username_and_password()
+    mail_server = login_to_gmail(username, password)
+    add_phone_recipient_to_file(number, provider)
+    send_invite(username, number, provider, mail_server)
+
+
+def invite_email(email):
+    username, password = get_username_and_password()
+    mail_server = login_to_gmail(username, password)
+    add_email_recipient_to_file(email)
+    send_invite(username, email, 'email', mail_server)
+
+
 def main():
     from sys import argv
     action = argv[1]
@@ -332,11 +346,13 @@ def main():
         send_fact()
     elif action == 'reply':
         reply()
-    elif action == 'invite':
+    elif action == 'invite_text':
         number = argv[2]
-        email = argv[3]
-        invite(number, email)
-
+        provider = argv[3]
+        invite_number(number, provider)
+    elif action == 'invite_email':
+        email = argv[2]
+        invite_email(email)
 
 
 if __name__ == '__main__':
