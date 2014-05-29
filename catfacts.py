@@ -74,10 +74,9 @@ def split_text(text):
     return textwrap.wrap(text, width=TEXT_MESSAGE_SIZE)
 
 def get_phone_recipients():
-    file = open("numbers.txt", "r")
     recipients = []
 
-    for line in file.readlines():
+    for line in get_nonwhitespace_lines_from_file('numbers.txt'):
         # skip lines beginning with # (fror easy commenting-out)
         if line[0] == '#':
             continue
@@ -87,23 +86,19 @@ def get_phone_recipients():
         # or (email_address, 'email')
         recipients.append(tuple(line.split()[0:2]))
 
-    file.close()
     return recipients
 
 
 def get_email_recipients():
-    file = open("emails.txt", "r")
     recipients = []
 
-    for line in file.readlines():
+    for line in get_nonwhitespace_lines_from_file('emails.txt'):
         # skip lines beginning with # (fror easy commenting-out)
         if line[0] == '#':
             continue
 
-        # add the entire line, minus the newline at the end
-        recipients.append(line[:-1])
+        recipients.append(line)
 
-    file.close()
     return recipients
 
 
@@ -114,7 +109,8 @@ def get_nonwhitespace_lines_from_file(filename):
     f.close()
 
     #return all lines that are not empty or whitespace
-    return [line for line in lines if not (line == '' or line.isspace())]
+    return [line.rstrip('\n') for line in lines
+            if not (line == '' or line.isspace())]
 
 
 def get_random_fact():
@@ -129,9 +125,7 @@ def get_random_promo():
 
 
 def get_username_and_password():
-    config = open('conf.txt')
-
-    for line in config.readlines():
+    for line in get_nonwhitespace_lines_from_file('conf.txt'):
         if not line.startswith('#'):  # comments
 
             first_space_index = line.find(' ')
