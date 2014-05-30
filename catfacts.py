@@ -15,7 +15,8 @@ from email.MIMEText import MIMEText
 TEXT_MESSAGE_SIZE = 140
 
 # too small and message parts arrive not in order
-DELAY_BETWEEN_MESSAGE_PARTS = 5 # in seconds
+# too long and message parts arrive more separately...
+DELAY_BETWEEN_MESSAGE_PARTS = 10 # in seconds
 
 # message sent when inviting someone to cat facts
 # assumed to be small enough for one text message
