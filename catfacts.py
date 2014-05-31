@@ -176,9 +176,10 @@ def send_invite(username, email_or_number, provider, mail_server):
 
 
 def send_fact():
-    fact = get_random_fact()
-    promo = get_random_promo()
-    message = ' '.join((fact, promo))
+    message = get_random_fact()
+    if random.random() < 0.4:
+        promo = get_random_promo()
+        message = ' '.join((message, promo))
     username, password = get_username_and_password()
     mail_server = login_to_gmail(username, password)
 
