@@ -5,6 +5,8 @@ import email
 import smtplib
 import imaplib
 import textwrap
+import shutil
+import tempfile
 from email.utils import parseaddr
 from email.MIMEText import MIMEText
 
@@ -22,6 +24,9 @@ DELAY_BETWEEN_MESSAGE_PARTS = 10 # in seconds
 # assumed to be small enough for one text message
 INVITE_MESSAGE = "Thank you for signing up for Cat Facts! You will now "\
     "receive fun facts about CATS! >o<"
+
+UNSUBSCRIBE_MESSAGE = "Unsubscribe? You gotta be kitten me! "\
+    "You are now unsubscribed from Cat Facts."
 
 
 text_gateways = {
@@ -234,6 +239,24 @@ def get_reply_message():
     return ' '.join(('<command not recognized>', fact, promo))
 
 
+def remove_lines_containing_text_from_file(text, filename):
+
+    # open the file and a temporary file
+    f = open(filename, 'r')
+    tmpfile = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+
+    # write lines not containing the text to the temporary file
+    for line in f:
+        if not text in line:
+            tmpfile.write(line)
+
+    f.close()
+    tmpfile.close()
+
+    # replace the original file with the temporary (modified) file
+    shutil.move(tmpfile.name, filename)
+
+
 def reply():
     fact = get_random_fact()
     promo = get_random_promo()
@@ -293,19 +316,35 @@ def reply():
 
         if ((number, provider) in phone_recipients):
             # we know this number
-            # get a reply and send it in text messages
-            print "replying to this person (we know them)"
-            for reply_part in split_text(get_reply_message()):
-                #debug output
-                print reply_part
+            if unsubscribe:
+                print 'this number is unsubscribing :('
+                print 'replying with unsubscription message'
+                mail(username, sender, UNSUBSCRIBE_MESSAGE, None, mail_server)
 
-                mail(username, sender, reply_part, None, mail_server)
-                time.sleep(DELAY_BETWEEN_MESSAGE_PARTS)
+                print 'removing number from numbers.txt'
+                remove_lines_containing_text_from_file(number, 'numbers.txt')
+            else:
+                # get a reply and send it in text messages
+                print "replying to this person (we know them)"
+                for reply_part in split_text(get_reply_message()):
+                    #debug output
+                    print reply_part
+
+                    mail(username, sender, reply_part, None, mail_server)
+                    time.sleep(DELAY_BETWEEN_MESSAGE_PARTS)
         elif sender in email_recipients:
             # we know this email
-            # get a reply and email it
-            mail(username, sender, get_reply_message(), "Cat Facts",
-                 mail_server)
+            if unsubscribe:
+                print 'this email is unsubscribing :('
+                print 'replying with unsubscription message'
+                mail(username, sender, UNSUBSCRIBE_MESSAGE, None, mail_server)
+
+                print 'removing email from emails.txt'
+                remove_lines_containing_text_from_file(sender, 'emails.txt')
+            else:
+                # get a reply and email it
+                mail(username, sender, get_reply_message(), "Cat Facts",
+                     mail_server)
 
         else:
             # we don't know this person
