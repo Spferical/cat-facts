@@ -235,7 +235,8 @@ def add_email_recipient_to_file(email):
 
 def get_reply_message():
     fact = get_random_fact()
-    promo = get_random_promo()
+    promo = "Remember, text \"UnSuBsCrIbE\" at any time to unsubscribe "\
+            "from Cat Facts!"
     return ' '.join(('<command not recognized>', fact, promo))
 
 
