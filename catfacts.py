@@ -293,15 +293,14 @@ def reply():
         sender = message['From']
 
         # find out if it's an unsubscribe email
+        # go through each text part of the message and see if it includes the
+        # word 'unsubscribe'
         unsubscribe = False
-        payload = message.get_payload()
-        if isinstance(payload, str):
-            payload = [payload]
-        for part in payload:
-            if 'unsubscribe' in part.lower():
-                unsubscribe = True
-                break
-
+        for part in message.walk():
+            if part.get_content_type() in ('text/plain', 'text/html'):
+                if 'unsubscribe' in part.get_payload().lower():
+                    unsubscribe = True
+                    break
 
         # extract /just/ the plain address from the address
         # e.g. foo@gmail.com instead of Foo Bar <foo@gmail.com>
