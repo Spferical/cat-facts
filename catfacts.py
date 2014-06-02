@@ -7,6 +7,8 @@ import imaplib
 import textwrap
 import shutil
 import tempfile
+import traceback
+import sys
 from email.utils import parseaddr
 from email.MIMEText import MIMEText
 
@@ -412,4 +414,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except:
+        print "Exception:"
+        print '-'*60
+        traceback.print_exc(file=sys.stdout)
+        print '-'*60
