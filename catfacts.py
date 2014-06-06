@@ -16,6 +16,7 @@ from email.MIMEText import MIMEText
 # 160 is the standard, but I've had texts cut off with it
 # it might include the length of the email we're sending from
 # 140 should be safe?
+# this may be because it includes the name of the sender
 TEXT_MESSAGE_SIZE = 140
 
 # too small and message parts arrive not in order
