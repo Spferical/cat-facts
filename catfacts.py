@@ -9,6 +9,8 @@ import shutil
 import tempfile
 import traceback
 import sys
+import argparse
+import os.path
 from email.utils import parseaddr
 from email.MIMEText import MIMEText
 
@@ -82,10 +84,11 @@ def split_text(text):
     """Splits a text into messages of TEXT_MESSAGE_SIZE characters"""
     return textwrap.wrap(text, width=TEXT_MESSAGE_SIZE)
 
-def get_phone_recipients():
+def get_phone_recipients(list):
     recipients = []
+    file_path = os.path.join('sms', list + '.txt')
 
-    for line in get_nonwhitespace_lines_from_file('numbers.txt'):
+    for line in get_nonwhitespace_lines_from_file(file_path):
         # skip lines beginning with # (fror easy commenting-out)
         if line[0] == '#':
             continue
@@ -98,10 +101,11 @@ def get_phone_recipients():
     return recipients
 
 
-def get_email_recipients():
+def get_email_recipients(list):
     recipients = []
+    file_path = os.path.join('email', list + '.txt')
 
-    for line in get_nonwhitespace_lines_from_file('emails.txt'):
+    for line in get_nonwhitespace_lines_from_file(file_path):
         # skip lines beginning with # (fror easy commenting-out)
         if line[0] == '#':
             continue
@@ -183,7 +187,7 @@ def send_invite(username, email_or_number, provider, mail_server):
     mail(username, email, INVITE_MESSAGE, subject, mail_server)
 
 
-def send_fact():
+def send_fact(list):
     message = get_random_fact()
     if random.random() < 0.4:
         promo = get_random_promo()
@@ -193,12 +197,12 @@ def send_fact():
 
     # send all emails
     print 'message being sent over email: ', message
-    for email in get_email_recipients():
+    for email in get_email_recipients(list):
         mail(username, email, message, "Cat Facts", mail_server)
 
     # send all texts
     messages = split_text(message)
-    phone_recipients = get_phone_recipients()
+    phone_recipients = get_phone_recipients(list)
     for message in messages:
         print 'message being sent over SMS: ', message
         for number, provider in phone_recipients:
@@ -224,14 +228,14 @@ def get_number_and_provider(email):
     return number, provider
 
 
-def add_phone_recipient_to_file(number, provider):
-    file = open('numbers.txt', 'a')
+def add_phone_recipient_to_file(number, provider, list='hourly'):
+    file = open(os.path.join('sms', list + '.txt'), 'a')
     file.write("%s %s\n" % (number, provider))
     file.close()
 
 
-def add_email_recipient_to_file(email):
-    file = open('emails.txt', 'a')
+def add_email_recipient_to_file(email, list='hourly'):
+    file = open(os.path.join('email', list + '.txt'), 'a')
     file.write(email + '\n')
     file.close()
 
@@ -266,8 +270,11 @@ def reply():
     promo = get_random_promo()
     username, password = get_username_and_password()
 
-    email_recipients = get_email_recipients()
-    phone_recipients = get_phone_recipients()
+    email_recipients = []
+    phone_recipients = []
+    for list in ('daily', 'hourly'):
+        email_recipients.extend(get_email_recipients(list))
+        phone_recipients.extend(get_phone_recipients(list))
 
     imap_mail = imaplib.IMAP4_SSL('imap.gmail.com')
     imap_mail.login(username, password)
@@ -324,8 +331,10 @@ def reply():
                 print 'replying with unsubscription message'
                 mail(username, sender, UNSUBSCRIBE_MESSAGE, None, mail_server)
 
-                print 'removing number from numbers.txt'
-                remove_lines_containing_text_from_file(number, 'numbers.txt')
+                print 'removing number'
+                for list in ('hourly', 'daily'):
+                    file_path = os.path.join('sms', list + '.txt')
+                    remove_lines_containing_text_from_file(number, file_path)
             else:
                 # get a reply and send it in text messages
                 print "replying to this person (we know them)"
@@ -342,8 +351,10 @@ def reply():
                 print 'replying with unsubscription message'
                 mail(username, sender, UNSUBSCRIBE_MESSAGE, None, mail_server)
 
-                print 'removing email from emails.txt'
-                remove_lines_containing_text_from_file(sender, 'emails.txt')
+                print 'removing email'
+                for list in ('hourly', 'daily'):
+                    file_path = os.path.join('email', list + '.txt')
+                    remove_lines_containing_text_from_file(sender, file_path)
             else:
                 # get a reply and email it
                 mail(username, sender, get_reply_message(), "Cat Facts",
@@ -395,30 +406,62 @@ def invite_email(email):
 
 
 def main():
-    from sys import argv
-    action = argv[1]
-    if action == 'send':
-        print 'catfacts sending at %s' % datetime.datetime.now()
-        send_fact()
-    elif action == 'reply':
-        print 'catfacts replying at %s' % datetime.datetime.now()
-        reply()
-    elif action == 'invite_text':
-        print 'catfacts inviting text at %s' % datetime.datetime.now()
-        number = argv[2]
-        provider = argv[3]
-        invite_number(number, provider)
-    elif action == 'invite_email':
-        print 'catfacts inviting email at %s' % datetime.datetime.now()
-        email = argv[2]
-        invite_email(email)
+    parser = argparse.ArgumentParser(
+        description = "Send cat facts via email and sms")
 
+    subparsers = parser.add_subparsers(dest="action")
 
-if __name__ == '__main__':
+    send_parser = subparsers.add_parser("send", help="send messages")
+    send_parser.add_argument(
+        "list", help="list of users to send to",
+        type=str)
+
+    reply_parser = subparsers.add_parser(
+        "reply", help="read messages and send replies")
+
+    invite_parser = subparsers.add_parser(
+        "invite", help="invite users to cat facts")
+    invite_subparsers = invite_parser.add_subparsers(dest="method")
+    invite_sms_parser = invite_subparsers.add_parser(
+        "sms", help="invite a cell phone number")
+    invite_sms_parser.add_argument(
+        "number", help="phone number to invite")
+    invite_sms_parser.add_argument(
+        "provider", help="phone service provider of number")
+    invite_email_parser = invite_subparsers.add_parser(
+        "email", help="invite an eail address")
+
+    args = parser.parse_args()
+
     try:
-        main()
+        if args.action == 'send':
+            print 'catfacts sending to %s at %s' %\
+                (args.list, datetime.datetime.now())
+            send_fact(args.list)
+
+        elif args.action == 'reply':
+            print 'catfacts replying at %s' % datetime.datetime.now()
+            reply()
+
+        elif args.action == 'invite':
+            print 'catfacts inviting via %s at %s' %\
+                (args.method, datetime.datetime.now())
+
+            if args.method == 'sms':
+                number = args.number
+                provider = args.provider
+                invite_number(number, provider)
+
+            elif args.method == 'email':
+                email = args.email
+                invite_email(email)
+
     except:
         print "Exception:"
         print '-'*60
         traceback.print_exc(file=sys.stdout)
         print '-'*60
+
+
+if __name__ == '__main__':
+    main()
