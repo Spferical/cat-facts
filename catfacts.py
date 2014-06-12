@@ -228,13 +228,13 @@ def get_number_and_provider(email):
     return number, provider
 
 
-def add_phone_recipient_to_file(number, provider, list='hourly'):
+def add_phone_recipient_to_file(number, provider, list='daily'):
     file = open(os.path.join('sms', list + '.txt'), 'a')
     file.write("%s %s\n" % (number, provider))
     file.close()
 
 
-def add_email_recipient_to_file(email, list='hourly'):
+def add_email_recipient_to_file(email, list='daily'):
     file = open(os.path.join('email', list + '.txt'), 'a')
     file.write(email + '\n')
     file.close()
@@ -391,14 +391,14 @@ def reply():
     imap_mail.logout()
 
 
-def invite_number(number, provider, list='hourly'):
+def invite_number(number, provider, list='daily'):
     username, password = get_username_and_password()
     mail_server = login_to_gmail(username, password)
     add_phone_recipient_to_file(number, provider, list)
     send_invite(username, number, provider, mail_server)
 
 
-def invite_email(email, list='hourly'):
+def invite_email(email, list='daily'):
     username, password = get_username_and_password()
     mail_server = login_to_gmail(username, password)
     add_email_recipient_to_file(email, list)
