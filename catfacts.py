@@ -391,17 +391,17 @@ def reply():
     imap_mail.logout()
 
 
-def invite_number(number, provider):
+def invite_number(number, provider, list='hourly'):
     username, password = get_username_and_password()
     mail_server = login_to_gmail(username, password)
-    add_phone_recipient_to_file(number, provider)
+    add_phone_recipient_to_file(number, provider, list)
     send_invite(username, number, provider, mail_server)
 
 
-def invite_email(email):
+def invite_email(email, list='hourly'):
     username, password = get_username_and_password()
     mail_server = login_to_gmail(username, password)
-    add_email_recipient_to_file(email)
+    add_email_recipient_to_file(email, list)
     send_invite(username, email, 'email', mail_server)
 
 
@@ -421,6 +421,9 @@ def main():
 
     invite_parser = subparsers.add_parser(
         "invite", help="invite users to cat facts")
+    invite_parser.add_argument(
+        '-l', '--list', help="list to add the user to", default='daily',
+        choices=['hourly', 'daily'])
     invite_subparsers = invite_parser.add_subparsers(dest="method")
     invite_sms_parser = invite_subparsers.add_parser(
         "sms", help="invite a cell phone number")
@@ -450,11 +453,11 @@ def main():
             if args.method == 'sms':
                 number = args.number
                 provider = args.provider
-                invite_number(number, provider)
+                invite_number(number, provider, list=args.list)
 
             elif args.method == 'email':
                 email = args.email
-                invite_email(email)
+                invite_email(email, list=args.list)
 
     except:
         print "Exception:"
