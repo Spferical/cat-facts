@@ -432,7 +432,7 @@ def main():
     invite_sms_parser.add_argument(
         "provider", help="phone service provider of number")
     invite_email_parser = invite_subparsers.add_parser(
-        "email", help="invite an eail address")
+        "email", help="invite an email address")
 
     args = parser.parse_args()
 
