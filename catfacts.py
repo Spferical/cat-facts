@@ -84,9 +84,9 @@ def split_text(text):
     """Splits a text into messages of TEXT_MESSAGE_SIZE characters"""
     return textwrap.wrap(text, width=TEXT_MESSAGE_SIZE)
 
-def get_phone_recipients(list):
+def get_phone_recipients(rlist):
     recipients = []
-    file_path = os.path.join('sms', list + '.txt')
+    file_path = os.path.join('sms', rlist + '.txt')
 
     for line in get_nonwhitespace_lines_from_file(file_path):
         # skip lines beginning with # (fror easy commenting-out)
@@ -101,9 +101,9 @@ def get_phone_recipients(list):
     return recipients
 
 
-def get_email_recipients(list):
+def get_email_recipients(rlist):
     recipients = []
-    file_path = os.path.join('email', list + '.txt')
+    file_path = os.path.join('email', rlist + '.txt')
 
     for line in get_nonwhitespace_lines_from_file(file_path):
         # skip lines beginning with # (fror easy commenting-out)
@@ -187,7 +187,7 @@ def send_invite(username, email_or_number, provider, mail_server):
     mail(username, email, INVITE_MESSAGE, subject, mail_server)
 
 
-def send_fact(list):
+def send_fact(rlist):
     message = get_random_fact()
     if random.random() < 0.4:
         promo = get_random_promo()
@@ -197,12 +197,12 @@ def send_fact(list):
 
     # send all emails
     print 'message being sent over email: ', message
-    for email in get_email_recipients(list):
+    for email in get_email_recipients(rlist):
         mail(username, email, message, "Cat Facts", mail_server)
 
     # send all texts
     messages = split_text(message)
-    phone_recipients = get_phone_recipients(list)
+    phone_recipients = get_phone_recipients(rlist)
     for message in messages:
         print 'message being sent over SMS: ', message
         for number, provider in phone_recipients:
@@ -228,14 +228,14 @@ def get_number_and_provider(email):
     return number, provider
 
 
-def add_phone_recipient_to_file(number, provider, list='daily'):
-    file = open(os.path.join('sms', list + '.txt'), 'a')
+def add_phone_recipient_to_file(number, provider, rlist='daily'):
+    file = open(os.path.join('sms', rlist + '.txt'), 'a')
     file.write("%s %s\n" % (number, provider))
     file.close()
 
 
-def add_email_recipient_to_file(email, list='daily'):
-    file = open(os.path.join('email', list + '.txt'), 'a')
+def add_email_recipient_to_file(email, rlist='daily'):
+    file = open(os.path.join('email', rlist + '.txt'), 'a')
     file.write(email + '\n')
     file.close()
 
@@ -281,9 +281,9 @@ def reply():
 
     email_recipients = []
     phone_recipients = []
-    for list in ('daily', 'hourly'):
-        email_recipients.extend(get_email_recipients(list))
-        phone_recipients.extend(get_phone_recipients(list))
+    for rlist in ('daily', 'hourly'):
+        email_recipients.extend(get_email_recipients(rlist))
+        phone_recipients.extend(get_phone_recipients(rlist))
 
     imap_mail = imaplib.IMAP4_SSL('imap.gmail.com')
     imap_mail.login(username, password)
@@ -339,8 +339,8 @@ def reply():
                 print 'this recipient is unsubscribing :('
 
                 print 'removing...'
-                for list in ('hourly', 'daily'):
-                    file_path = os.path.join(recipient_type, list + '.txt')
+                for rlist in ('hourly', 'daily'):
+                    file_path = os.path.join(recipient_type, rlist + '.txt')
                     remove_lines_containing_text_from_file(number, file_path)
 
                 print 'replying with unsubscription message'
@@ -349,17 +349,17 @@ def reply():
             elif command in ('hourly', 'daily'):
                 print 'this person wants %s cat facts' % command
 
-                for list in ('hourly', 'daily'):
-                    file_path = os.path.join(recipient_type, list + '.txt')
-                    if list != command:
+                for rlist in ('hourly', 'daily'):
+                    file_path = os.path.join(recipient_type, rlist + '.txt')
+                    if rlist != command:
                         remove_lines_containing_text_from_file(
                             number, file_path)
                     else:
                         if recipient_type == 'sms':
                             add_phone_recipient_to_file(number, provider,
-                                                        list=command)
+                                                        rlist=command)
                         else:
-                            add_email_recipient_to_file(sender, list=command)
+                            add_email_recipient_to_file(sender, rlist=command)
 
                 print 'replying with message'
                 text = "You will now receive %s cat facts." % command
@@ -390,21 +390,21 @@ def reply():
                 # check if their message included a time preference
                 # or default to daily facts
                 if command in ('hourly', 'daily'):
-                    list = command
+                    rlist = command
                 else:
-                    list = 'daily'
+                    rlist = 'daily'
 
                 if recipient_type == 'sms':
                     # this person text-messaged
-                    # add them to the recipient list
-                    add_phone_recipient_to_file(number, provider, list=list)
+                    # add them to the recipient rlist
+                    add_phone_recipient_to_file(number, provider, rlist=rlist)
                     phone_recipients.append((number, provider))
                     # also give them a welcome message!
                     send_invite(username, number, provider,  mail_server)
                 else:
                     # this person emailed, probably
-                    # add them to the recipient list
-                    add_email_recipient_to_file(sender, list=list)
+                    # add them to the recipient rlist
+                    add_email_recipient_to_file(sender, rlist=rlist)
                     email_recipients.append(sender)
                     # also give them a welcome message!
                     send_invite(username, sender, 'email', mail_server)
@@ -423,17 +423,17 @@ def reply():
     imap_mail.logout()
 
 
-def invite_number(number, provider, list='daily'):
+def invite_number(number, provider, rlist='daily'):
     username, password = get_username_and_password()
     mail_server = login_to_gmail(username, password)
-    add_phone_recipient_to_file(number, provider, list)
+    add_phone_recipient_to_file(number, provider, rlist)
     send_invite(username, number, provider, mail_server)
 
 
-def invite_email(email, list='daily'):
+def invite_email(email, rlist='daily'):
     username, password = get_username_and_password()
     mail_server = login_to_gmail(username, password)
-    add_email_recipient_to_file(email, list)
+    add_email_recipient_to_file(email, rlist)
     send_invite(username, email, 'email', mail_server)
 
 
@@ -484,11 +484,11 @@ def main():
         if args.method == 'sms':
             number = args.number
             provider = args.provider
-            invite_number(number, provider, list=args.list)
+            invite_number(number, provider, rlist=args.list)
 
         elif args.method == 'email':
             email = args.email
-            invite_email(email, list=args.list)
+            invite_email(email, rlist=args.list)
 
 
 if __name__ == '__main__':
