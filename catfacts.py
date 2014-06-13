@@ -277,8 +277,6 @@ def get_command_from_message(message):
 
 
 def reply():
-    fact = get_random_fact()
-    promo = get_random_promo()
     username, password = get_username_and_password()
 
     email_recipients = []
