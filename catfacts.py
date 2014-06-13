@@ -470,34 +470,27 @@ def main():
 
     args = parser.parse_args()
 
-    try:
-        if args.action == 'send':
-            print 'catfacts sending to %s at %s' %\
-                (args.list, datetime.datetime.now())
-            send_fact(args.list)
+    if args.action == 'send':
+        print 'catfacts sending to %s at %s' %\
+            (args.list, datetime.datetime.now())
+        send_fact(args.list)
 
-        elif args.action == 'reply':
-            print 'catfacts replying at %s' % datetime.datetime.now()
-            reply()
+    elif args.action == 'reply':
+        print 'catfacts replying at %s' % datetime.datetime.now()
+        reply()
 
-        elif args.action == 'invite':
-            print 'catfacts inviting via %s at %s' %\
-                (args.method, datetime.datetime.now())
+    elif args.action == 'invite':
+        print 'catfacts inviting via %s at %s' %\
+            (args.method, datetime.datetime.now())
 
-            if args.method == 'sms':
-                number = args.number
-                provider = args.provider
-                invite_number(number, provider, list=args.list)
+        if args.method == 'sms':
+            number = args.number
+            provider = args.provider
+            invite_number(number, provider, list=args.list)
 
-            elif args.method == 'email':
-                email = args.email
-                invite_email(email, list=args.list)
-
-    except:
-        print "Exception:"
-        print '-'*60
-        traceback.print_exc(file=sys.stdout)
-        print '-'*60
+        elif args.method == 'email':
+            email = args.email
+            invite_email(email, list=args.list)
 
 
 if __name__ == '__main__':
