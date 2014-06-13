@@ -348,6 +348,10 @@ def reply():
                 for rlist in ('hourly', 'daily'):
                     file_path = os.path.join(recipient_type, rlist + '.txt')
                     remove_lines_containing_text_from_file(number, file_path)
+                if recipient_type == 'email':
+                    email_recipients.remove(sender)
+                else:
+                    phone_recipients.remove((number, provider))
 
                 print 'replying with unsubscription message'
                 mail(username, sender, UNSUBSCRIBE_MESSAGE, None, mail_server)
