@@ -25,10 +25,15 @@ TEXT_MESSAGE_SIZE = 140
 # too long and message parts arrive more separately...
 DELAY_BETWEEN_MESSAGE_PARTS = 10 # in seconds
 
-# message sent when inviting someone to cat facts
+# messages sent when inviting someone to cat facts
 # assumed to be small enough for one text message
-INVITE_MESSAGE = "Thank you for signing up for Cat Facts! You will now "\
-    "receive fun facts about CATS! >o<"
+_INVITE_MESSAGE = "Thank you for signing up for Cat Facts! You will now "\
+    "receive {rlist} fun facts about CATS! >o<"
+
+INVITE_MESSAGES = {
+    'hourly' : _INVITE_MESSAGE.format(rlist='hourly'),
+    'daily' : _INVITE_MESSAGE.format(rlist='hourly'),
+}
 
 UNSUBSCRIBE_MESSAGE = "Unsubscribe? You gotta be kitten me! "\
     "You are now unsubscribed from Cat Facts."
@@ -175,7 +180,8 @@ def mail(username, to, text, subject, mail_server):
     mail_server.sendmail(username, to, msg.as_string())
 
 
-def send_invite(username, email_or_number, provider, mail_server):
+def send_invite(username, email_or_number, provider, mail_server,
+                rlist='daily'):
     print 'sending invite to', email_or_number, provider
     if provider == 'email':
         email = email_or_number
@@ -184,7 +190,7 @@ def send_invite(username, email_or_number, provider, mail_server):
         number = email_or_number
         email = get_phone_email(number, provider)
         subject = None
-    mail(username, email, INVITE_MESSAGE, subject, mail_server)
+    mail(username, email, INVITE_MESSAGES[rlist], subject, mail_server)
 
 
 def send_fact(rlist):
