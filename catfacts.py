@@ -32,7 +32,7 @@ _INVITE_MESSAGE = "Thank you for signing up for Cat Facts! You will now "\
 
 INVITE_MESSAGES = {
     'hourly' : _INVITE_MESSAGE.format(rlist='hourly'),
-    'daily' : _INVITE_MESSAGE.format(rlist='hourly'),
+    'daily' : _INVITE_MESSAGE.format(rlist='daily'),
 }
 
 UNSUBSCRIBE_MESSAGE = "Unsubscribe? You gotta be kitten me! "\
