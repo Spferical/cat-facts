@@ -475,6 +475,8 @@ def main():
         "provider", help="phone service provider of number")
     invite_email_parser = invite_subparsers.add_parser(
         "email", help="invite an email address")
+    invite_email_parser.add_argument(
+        "address", help="email address to send facts to")
 
     args = parser.parse_args()
 
@@ -497,8 +499,8 @@ def main():
             invite_number(number, provider, rlist=args.list)
 
         elif args.method == 'email':
-            email = args.email
-            invite_email(email, rlist=args.list)
+            email_address = args.address
+            invite_email(email_address, rlist=args.list)
 
 
 if __name__ == '__main__':
