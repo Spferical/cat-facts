@@ -275,11 +275,11 @@ def get_command_from_message(message):
     # go through each text part of the message and see if it includes the
     # word for a command
     for part in message.walk():
-        message_text = part.get_payload().lower()
         if part.get_content_type() in ('text/plain', 'text/html'):
+            message_text = part.get_payload().lower()
             for command in ['unsubscribe', 'daily', 'hourly']:
                 if command in message_text:
-                    return command
+                    return command, message_text
 
 
 def reply():
