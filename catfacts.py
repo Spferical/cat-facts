@@ -11,6 +11,7 @@ import traceback
 import sys
 import argparse
 import os.path
+import re
 from email.utils import parseaddr
 from email.MIMEText import MIMEText
 
@@ -37,6 +38,10 @@ INVITE_MESSAGES = {
 
 UNSUBSCRIBE_MESSAGE = "Unsubscribe? You gotta be kitten me! "\
     "You are now unsubscribed from Cat Facts."
+
+
+INVITE_USAGE_MESSAGE = "<invalid arguments> to invite someone, either send " \
+    "'invite sms <number> <provider>' or 'invite email <address>'"
 
 
 text_gateways = {
@@ -271,15 +276,51 @@ def remove_lines_containing_text_from_file(text, filename):
     shutil.move(tmpfile.name, filename)
 
 
+def get_command_from_text(text):
+    # parse everything in lowercase
+    text = text.lower()
+
+    # returns a command and the arguments for that command, if any found
+    # if none found, returns (None, [])
+    command = None
+    arguments = []
+
+    for possible_command in ['unsubscribe', 'daily', 'hourly', 'invite']:
+        if possible_command in text:
+            command = possible_command
+            if command == 'invite':
+                # search for an sms invite
+                match = re.search("invite sms [0-9]{10} \w+", text)
+                if match:
+                    words = match.group().split()
+                    number = words[2]
+                    provider = words[3]
+                    arguments = ['sms', number, provider]
+                    break
+
+                # search for an email address invite
+                match = re.search("invite email \S+", text)
+                if match:
+                    words = match.group().split()
+                    email = words[2]
+                    arguments = ['email', email]
+                    break
+            break
+    return command, arguments
+
+
 def get_command_from_message(message):
     # go through each text part of the message and see if it includes the
     # word for a command
+    # returns a command and the arguments for that command
     for part in message.walk():
-        if part.get_content_type() in ('text/plain', 'text/html'):
-            message_text = part.get_payload().lower()
-            for command in ['unsubscribe', 'daily', 'hourly']:
-                if command in message_text:
-                    return command, message_text
+        if part.get_content_type() in ('text/plain'): # TODO: parse 'text/html'
+            message_text = part.get_payload()
+            command, arguments = get_command_from_text(message_text)
+            if command:
+                return command, arguments
+    # no command found
+    return None, []
 
 
 def reply():
@@ -318,7 +359,7 @@ def reply():
         sender = message['From']
 
         # find out if the message includes a command
-        command = get_command_from_message(message)
+        command, arguments = get_command_from_message(message)
 
         # extract /just/ the plain address from the address
         # e.g. foo@gmail.com instead of Foo Bar <foo@gmail.com>
@@ -374,6 +415,27 @@ def reply():
                 print 'replying with message'
                 text = "You will now receive %s cat facts." % command
                 mail(username, sender, text, None, mail_server)
+
+            elif command == 'invite':
+                print 'this person wants to invite someone'
+
+                if len(arguments) == 0:
+                    print "Insufficient arguments"
+                    print "Sending invite usage message"
+                    mail(username, sender, INVITE_USAGE_MESSAGE, None,
+                         mail_server)
+                else:
+                    method = arguments[0]
+                    if method == 'sms':
+                        print 'this person wants to invite via sms'
+                        number, provider = arguments[1:2]
+                        print 'inviting the number'
+                        invite_number(number, provider)
+                    elif method == 'email':
+                        print 'this person wants to invite via email'
+                        email_address = arguments[1]
+                        print 'inviting the email'
+                        invite_email(email_address)
 
             else:
                 # no command was detected
