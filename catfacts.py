@@ -388,7 +388,10 @@ def reply():
                 print 'removing...'
                 for rlist in ('hourly', 'daily'):
                     file_path = os.path.join(recipient_type, rlist + '.txt')
-                    remove_lines_containing_text_from_file(number, file_path)
+                    if recipient_type == 'sms':
+                        remove_lines_containing_text_from_file(number, file_path)
+                    else:
+                        remove_lines_containing_text_from_file(sender, file_path)
                 if recipient_type == 'email':
                     email_recipients.remove(sender)
                 else:
@@ -403,8 +406,12 @@ def reply():
                 for rlist in ('hourly', 'daily'):
                     file_path = os.path.join(recipient_type, rlist + '.txt')
                     if rlist != command:
-                        remove_lines_containing_text_from_file(
-                            number, file_path)
+                        if recipient_type == 'sms':
+                            remove_lines_containing_text_from_file(
+                                number, file_path)
+                        else:
+                            remove_lines_containing_text_from_file(
+                                sender, file_path)
                     else:
                         if recipient_type == 'sms':
                             add_phone_recipient_to_file(number, provider,
