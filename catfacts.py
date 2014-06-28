@@ -258,7 +258,7 @@ def get_reply_message():
     return ' '.join(('<command not recognized>', fact, promo))
 
 
-def remove_lines_containing_text_from_file(text, filename):
+def remove_matching_lines_from_file(text, filename):
 
     # open the file and a temporary file
     f = open(filename, 'r')
@@ -285,7 +285,8 @@ def get_command_from_text(text):
     command = None
     arguments = []
 
-    for possible_command in ['unsubscribe', 'daily', 'hourly', 'invite']:
+    for possible_command in ['unsubscribe', 'daily', 'hourly', 'invite',
+                             'nuke_everything']:
         if possible_command in text:
             command = possible_command
             if command == 'invite':
@@ -321,6 +322,25 @@ def get_command_from_message(message):
                 return command, arguments
     # no command found
     return None, []
+
+
+def nuke_everything():
+    for rlist in ('daily', 'hourly'):
+        for recipient_type in ('sms', 'email'):
+            f = open(os.path.join(recipient_type, rlist + '.txt'), 'w')
+            f.write("")
+
+
+def remove_recipient_from_files(recipient, recipient_type):
+    print 'removing...'
+
+    for rlist in ('hourly', 'daily'):
+        file_path = os.path.join(recipient_type, rlist + '.txt')
+        if recipient_type == 'sms':
+            number, provider = recipient
+            remove_matching_lines_from_file(number, file_path)
+        else:
+            remove_matching_lines_from_file(recipient, file_path)
 
 
 def reply():
@@ -378,115 +398,124 @@ def reply():
         else:
             recipient_type = 'email'
 
-        existing_recipient = (number, provider) in phone_recipients \
-            or sender in email_recipients
+        if command == 'nuke_everything':
+            nuke_everything()
+        else:
 
-        if existing_recipient:
-            if command == 'unsubscribe':
-                print 'this recipient is unsubscribing :('
+            existing_recipient = (number, provider) in phone_recipients \
+                or sender in email_recipients
 
-                print 'removing...'
-                for rlist in ('hourly', 'daily'):
+            if existing_recipient:
+                if command == 'unsubscribe':
+                    print 'this recipient is unsubscribing :('
+
+                    # remove recipient from all files
+                    if recipient_type == 'sms':
+                        remove_recipient_from_files(
+                            (number, provider), recipient_type)
+                    else:
+                        remove_recipient_from_files(email, recipient_type)
+
+                    # remove recipient from lists so we treat them properly
+                    # if we receive another email near the same time
+                    if recipient_type == 'email':
+                        email_recipients.remove(sender)
+                    else:
+                        phone_recipients.remove((number, provider))
+
+                    print 'replying with unsubscription message'
+                    mail(username, sender, UNSUBSCRIBE_MESSAGE, None,
+                         mail_server)
+
+                elif command in ('hourly', 'daily'):
+                    print 'this person wants %s cat facts' % command
+
+                    # remove user from all groups he might have been part of
+                    # previously
+                    if recipient_type == 'sms':
+                        remove_recipient_from_files(
+                            (number, provider), recipient_type)
+                    else:
+                        remove_recipient_from_files(email, recipient_type)
+
+                    # add the user to his new list
+                    rlist = command
                     file_path = os.path.join(recipient_type, rlist + '.txt')
                     if recipient_type == 'sms':
-                        remove_lines_containing_text_from_file(number, file_path)
+                        add_phone_recipient_to_file(number, provider,
+                                                    rlist=command)
                     else:
-                        remove_lines_containing_text_from_file(sender, file_path)
-                if recipient_type == 'email':
-                    email_recipients.remove(sender)
-                else:
-                    phone_recipients.remove((number, provider))
+                        add_email_recipient_to_file(sender, rlist=command)
 
-                print 'replying with unsubscription message'
-                mail(username, sender, UNSUBSCRIBE_MESSAGE, None, mail_server)
+                    print 'replying with message'
+                    text = "You will now receive %s cat facts." % command
+                    mail(username, sender, text, None, mail_server)
 
-            elif command in ('hourly', 'daily'):
-                print 'this person wants %s cat facts' % command
+                elif command == 'invite':
+                    print 'this person wants to invite someone'
 
-                for rlist in ('hourly', 'daily'):
-                    file_path = os.path.join(recipient_type, rlist + '.txt')
-                    if rlist != command:
-                        if recipient_type == 'sms':
-                            remove_lines_containing_text_from_file(
-                                number, file_path)
-                        else:
-                            remove_lines_containing_text_from_file(
-                                sender, file_path)
+                    if len(arguments) == 0:
+                        print "Insufficient arguments"
+                        print "Sending invite usage message"
+                        mail(username, sender, INVITE_USAGE_MESSAGE, None,
+                            mail_server)
                     else:
-                        if recipient_type == 'sms':
-                            add_phone_recipient_to_file(number, provider,
-                                                        rlist=command)
-                        else:
-                            add_email_recipient_to_file(sender, rlist=command)
+                        method = arguments[0]
+                        if method == 'sms':
+                            print 'this person wants to invite via sms'
+                            number, provider = arguments[1:2]
+                            print 'inviting the number'
+                            invite_number(number, provider)
+                        elif method == 'email':
+                            print 'this person wants to invite via email'
+                            email_address = arguments[1]
+                            print 'inviting the email'
+                            invite_email(email_address)
 
-                print 'replying with message'
-                text = "You will now receive %s cat facts." % command
-                mail(username, sender, text, None, mail_server)
-
-            elif command == 'invite':
-                print 'this person wants to invite someone'
-
-                if len(arguments) == 0:
-                    print "Insufficient arguments"
-                    print "Sending invite usage message"
-                    mail(username, sender, INVITE_USAGE_MESSAGE, None,
-                         mail_server)
                 else:
-                    method = arguments[0]
-                    if method == 'sms':
-                        print 'this person wants to invite via sms'
-                        number, provider = arguments[1:2]
-                        print 'inviting the number'
-                        invite_number(number, provider)
-                    elif method == 'email':
-                        print 'this person wants to invite via email'
-                        email_address = arguments[1]
-                        print 'inviting the email'
-                        invite_email(email_address)
+                    # no command was detected
+                    # get a reply and send it in text messages
+                    print "replying to this message with command not found"
+                    for reply_part in split_text(get_reply_message()):
+                        #debug output
+                        print reply_part
+
+                        mail(username, sender, reply_part, None, mail_server)
+                        time.sleep(DELAY_BETWEEN_MESSAGE_PARTS)
 
             else:
-                # no command was detected
-                # get a reply and send it in text messages
-                print "replying to this message with command not found"
-                for reply_part in split_text(get_reply_message()):
-                    #debug output
-                    print reply_part
+                # we don't know this person
 
-                    mail(username, sender, reply_part, None, mail_server)
-                    time.sleep(DELAY_BETWEEN_MESSAGE_PARTS)
+                if command == 'unsubscribe':
+                    # we'll just ignore an unknown recipient who wants to
+                    # unsubscribe
+                    pass
 
-        else:
-            # we don't know this person
-
-            if command == 'unsubscribe':
-                # we'll just ignore an unknown recipient who wants to
-                # unsubscribe
-                pass
-
-            else:
-                # this is a new person, so subscribe them!
-
-                # check if their message included a time preference
-                # or default to daily facts
-                if command in ('hourly', 'daily'):
-                    rlist = command
                 else:
-                    rlist = 'daily'
+                    # this is a new person, so subscribe them!
 
-                if recipient_type == 'sms':
-                    # this person text-messaged
-                    # add them to the recipient rlist
-                    add_phone_recipient_to_file(number, provider, rlist=rlist)
-                    phone_recipients.append((number, provider))
-                    # also give them a welcome message!
-                    send_invite(username, number, provider,  mail_server)
-                else:
-                    # this person emailed, probably
-                    # add them to the recipient rlist
-                    add_email_recipient_to_file(sender, rlist=rlist)
-                    email_recipients.append(sender)
-                    # also give them a welcome message!
-                    send_invite(username, sender, 'email', mail_server)
+                    # check if their message included a time preference
+                    # or default to daily facts
+                    if command in ('hourly', 'daily'):
+                        rlist = command
+                    else:
+                        rlist = 'daily'
+
+                    if recipient_type == 'sms':
+                        # this person text-messaged
+                        # add them to the recipient rlist
+                        add_phone_recipient_to_file(number, provider,
+                                                    rlist=rlist)
+                        phone_recipients.append((number, provider))
+                        # also give them a welcome message!
+                        send_invite(username, number, provider,  mail_server)
+                    else:
+                        # this person emailed, probably
+                        # add them to the recipient rlist
+                        add_email_recipient_to_file(sender, rlist=rlist)
+                        email_recipients.append(sender)
+                        # also give them a welcome message!
+                        send_invite(username, sender, 'email', mail_server)
 
 
         # move the email to archive so we don't reply to it again
