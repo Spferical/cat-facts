@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """For testing"""
 import catfacts
 import unittest
