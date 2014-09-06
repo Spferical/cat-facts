@@ -13,6 +13,7 @@ import sys
 import argparse
 import os.path
 import re
+import configparser
 from email.utils import parseaddr
 from email.MIMEText import MIMEText
 
@@ -149,17 +150,11 @@ def get_random_promo():
 
 
 def get_username_and_password():
-    for line in get_nonwhitespace_lines_from_file('conf.txt'):
-        if not line.startswith('#'):  # comments
-
-            first_space_index = line.find(' ')
-            # username: the line up to the first space
-            username = line[:first_space_index]
-            # password: the line after the first space
-            password = line[first_space_index + 1:]
-
-            return username, password
-    assert False, "no username and password found in conf.txt!"
+    config = configparser.ConfigParser()
+    config.read('config.cfg')
+    username = config.get('Login', 'username')
+    password = config.get('Login', 'password')
+    return username, password
 
 
 def login_to_gmail(username, password):
