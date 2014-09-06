@@ -157,6 +157,12 @@ def get_username_and_password():
     return username, password
 
 
+def get_alert_recipient():
+    config = configparser.ConfigParser()
+    config.read('config.cfg')
+    return config.get('Alert', 'recipient')
+
+
 def login_to_gmail(username, password):
     # ports 587 or 465 should work
     mail_server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
@@ -320,6 +326,14 @@ def get_command_from_message(message):
     return None, []
 
 
+def make_alert_message(message):
+    alert = ' '.join('Message from', message['From'])
+    for part in message.walk():
+        if part.get_content_type() in ('text/plain',):
+            alert += part.get_payload()
+    return alert
+
+
 def nuke_everything():
     for rlist in ('daily', 'hourly'):
         for recipient_type in ('sms', 'email'):
@@ -393,6 +407,11 @@ def reply():
             recipient_type = 'sms'
         else:
             recipient_type = 'email'
+
+        # send alert that we got a message
+        print("Sending alert...")
+        mail(username, get_alert_recipient(), make_alert_message(message), '',
+             mail_server)
 
         if command == 'nuke_everything':
             nuke_everything()
