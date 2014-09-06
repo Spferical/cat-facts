@@ -15,7 +15,7 @@ import os.path
 import re
 import configparser
 from email.utils import parseaddr
-from email.MIMEText import MIMEText
+from email.mime.text import MIMEText
 
 
 # 160 is the standard, but I've had texts cut off with it
