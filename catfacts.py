@@ -384,7 +384,7 @@ def reply():
         raw_email = data[0][1]
 
         #get a nice interface for the mail via the email library
-        message = email.message_from_string(raw_email)
+        message = email.message_from_bytes(raw_email)
         # with it, get who sent the email
         sender = message['From']
 
