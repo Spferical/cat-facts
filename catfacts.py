@@ -327,7 +327,7 @@ def get_command_from_message(message):
 
 
 def make_alert_message(message):
-    alert = ' '.join('Message from', message['From'])
+    alert = ' '.join(('Message from', str(message['From']), ': '))
     for part in message.walk():
         if part.get_content_type() in ('text/plain',):
             alert += part.get_payload()
