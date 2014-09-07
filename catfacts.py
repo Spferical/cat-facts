@@ -378,6 +378,7 @@ def reply():
     mail_server = login_to_gmail(username, password)
 
     for id in data[0].split():
+        id = id.decode("utf-8")
 
         #get the email for each uid
         typ, data = imap_mail.uid("fetch", id, '(RFC822)')
