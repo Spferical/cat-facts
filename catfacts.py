@@ -48,19 +48,17 @@ INVITE_USAGE_MESSAGE = "<invalid arguments> to invite someone, either send " \
 
 text_gateways = {
     # "carriername" : "whatever.com"
-    # some commented out because I don't know anyone who uses them
     'verizon' : 'vtext.com',
     'att' : 'txt.att.net',
     'at&t' : 'txt.att.net',
     'sprint' : 'messaging.sprintpcs.com',
-    #'alltel' : 'message.alltel.com',
-    #'boost' : 'myboostmobile.com',
-    #'nextel': 'messaging.nextel.com',
-    #'t-mobile' : 'tmomail.net',
-    #'tmobile' : 'tmomail.net',
-    #'uscellular' : 'email.uscc.net',
-    #'us cellular' : 'email.uscc.net',
-    #'virgin mobile' : 'vmobl.com'
+    'alltel' : 'message.alltel.com',
+    'boost' : 'myboostmobile.com',
+    'nextel': 'messaging.nextel.com',
+    't-mobile' : 'tmomail.net',
+    'tmobile' : 'tmomail.net',
+    'uscellular' : 'email.uscc.net',
+    'vmobile' : 'vmobl.com'
 }
 
 
@@ -75,8 +73,8 @@ reverse_gateways = {
     'myboostmobile.com' : 'boost',
     'messaging.nextel.com' : 'nextel',
     'tmomail.net' : 't-mobile',
-    'email.uscc.net' : 'us cellular',
-    'vmobl.com' : 'virgin mobile',
+    'email.uscc.net' : 'uscellular',
+    'vmobl.com' : 'vmobile',
 }
 
 
