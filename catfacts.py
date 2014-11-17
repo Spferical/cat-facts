@@ -477,7 +477,7 @@ def reply():
                         method = arguments[0]
                         if method == 'sms':
                             print('this person wants to invite via sms')
-                            number, provider = arguments[1:2]
+                            number, provider = arguments[1:3]
                             print('inviting the number')
                             invite_number(number, provider)
                         elif method == 'email':
