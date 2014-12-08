@@ -621,6 +621,8 @@ def main():
             email_address = args.address
             invite_email(email_address, rlist=args.list)
 
+    logging.info("Finished running.")
+
 
 if __name__ == '__main__':
     try:
