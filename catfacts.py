@@ -185,14 +185,13 @@ def mail(username, to, text, subject, mail_server):
     if subject:
         msg['Subject'] = subject
 
-    logging.info('Sending email to {to_address}', to_address=to)
+    logging.info('Sending email to %s', to)
     mail_server.sendmail(username, to, msg.as_string())
 
 
 def send_invite(username, email_or_number, provider, mail_server,
                 rlist='daily'):
-    logging.info('Sending invite to {recipient} {provider}',
-                 recipient=email_or_number, provider=provider)
+    logging.info('Sending invite to %s %s', email_or_number, provider)
     if provider == 'email':
         email = email_or_number
         subject = "Cat Facts"
@@ -212,7 +211,7 @@ def send_fact(rlist):
     mail_server = login_to_gmail(username, password)
 
     # send all emails
-    logging.info('Sending over email: {message}', message=message)
+    logging.info('Sending over email: %s', message)
     for email in get_email_recipients(rlist):
         mail(username, email, message, "Cat Facts", mail_server)
 
@@ -220,7 +219,7 @@ def send_fact(rlist):
     messages = split_text(message)
     phone_recipients = get_phone_recipients(rlist)
     for message in messages:
-        logging.info('Sending over SMS: {message}', message=message)
+        logging.info('Sending over SMS: %s', message)
         for number, provider in phone_recipients:
             email = get_phone_email(number, provider)
             mail(username, email, message, None, mail_server)
@@ -345,8 +344,7 @@ def nuke_everything():
 
 
 def remove_recipient_from_files(recipient, recipient_type):
-    logging.info('removing recipient {recipient} {recipient_type}',
-                 recipient=recipient, recipient_type=recipient_type)
+    logging.info('removing recipient %s %s', recipient, recipient_type)
 
     for rlist in ('hourly', 'daily'):
         file_path = os.path.join(recipient_type, rlist + '.txt')
@@ -401,13 +399,12 @@ def reply():
         sender = parseaddr(sender)[1]
 
         # debug printing
-        logging.info("Got email! Sender={sender}", sender=sender)
+        logging.info("Got email! Sender=%s", sender)
 
         # see if we this is a new person / not in the recipient list
         number, provider = get_number_and_provider(sender)
 
-        logging.debug("Detected number:{number} provider:{provider}",
-                      number=number, provider=provider)
+        logging.debug("Detected number:%s provider:%s", number, provider)
 
         if number:
             recipient_type = 'sms'
@@ -449,8 +446,7 @@ def reply():
                          mail_server)
 
                 elif command in ('hourly', 'daily'):
-                    logging.info('This person wants {freq} cat facts',
-                                 freq=command)
+                    logging.info('This person wants %s cat facts', command)
 
                     # remove user from all groups he might have been part of
                     # previously
@@ -602,7 +598,7 @@ def main():
     args = parser.parse_args()
 
     if args.action == 'send':
-        logging.info('Sending to {list}...', list=args.list)
+        logging.info('Sending to %s...', args.list)
         send_fact(args.list)
 
     elif args.action == 'reply':
@@ -610,7 +606,7 @@ def main():
         reply()
 
     elif args.action == 'invite':
-        logging.info('Inviting via {method}...', method=args.method)
+        logging.info('Inviting via %s...', args.method)
 
         if args.method == 'sms':
             number = args.number
