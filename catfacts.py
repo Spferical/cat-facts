@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import random
 import time
-import datetime
 import email
 import smtplib
 import imaplib
@@ -14,6 +13,7 @@ import argparse
 import os.path
 import re
 import configparser
+import logging
 from email.utils import parseaddr
 from email.mime.text import MIMEText
 
@@ -76,6 +76,10 @@ reverse_gateways = {
     'email.uscc.net' : 'uscellular',
     'vmobl.com' : 'vmobile',
 }
+
+LOG_FORMAT = "[%(asctime)s] %(message)s"
+LOG_FILE = "LOG.txt"
+logging.basicConfig(format=LOG_FORMAT, filename=LOG_FILE, level=logging.DEBUG)
 
 
 def get_phone_email(phone_number, provider):
@@ -181,13 +185,14 @@ def mail(username, to, text, subject, mail_server):
     if subject:
         msg['Subject'] = subject
 
-    print('sending email to', to)
+    logging.info('Sending email to {to_address}', to_address=to)
     mail_server.sendmail(username, to, msg.as_string())
 
 
 def send_invite(username, email_or_number, provider, mail_server,
                 rlist='daily'):
-    print('sending invite to', email_or_number, provider)
+    logging.info('Sending invite to {recipient} {provider}',
+                 recipient=email_or_number, provider=provider)
     if provider == 'email':
         email = email_or_number
         subject = "Cat Facts"
@@ -207,7 +212,7 @@ def send_fact(rlist):
     mail_server = login_to_gmail(username, password)
 
     # send all emails
-    print('message being sent over email: ', message)
+    logging.info('Sending over email: {message}', message=message)
     for email in get_email_recipients(rlist):
         mail(username, email, message, "Cat Facts", mail_server)
 
@@ -215,7 +220,7 @@ def send_fact(rlist):
     messages = split_text(message)
     phone_recipients = get_phone_recipients(rlist)
     for message in messages:
-        print('message being sent over SMS: ', message)
+        logging.info('Sending over SMS: {message}', message=message)
         for number, provider in phone_recipients:
             email = get_phone_email(number, provider)
             mail(username, email, message, None, mail_server)
@@ -340,7 +345,8 @@ def nuke_everything():
 
 
 def remove_recipient_from_files(recipient, recipient_type):
-    print('removing...')
+    logging.info('removing recipient {recipient} {recipient_type}',
+                 recipient=recipient, recipient_type=recipient_type)
 
     for rlist in ('hourly', 'daily'):
         file_path = os.path.join(recipient_type, rlist + '.txt')
@@ -395,12 +401,13 @@ def reply():
         sender = parseaddr(sender)[1]
 
         # debug printing
-        print("Got email! Sender=" + sender)
+        logging.info("Got email! Sender={sender}", sender=sender)
 
         # see if we this is a new person / not in the recipient list
         number, provider = get_number_and_provider(sender)
 
-        print(number, provider)
+        logging.debug("Detected number:{number} provider:{provider}",
+                      number=number, provider=provider)
 
         if number:
             recipient_type = 'sms'
@@ -408,7 +415,7 @@ def reply():
             recipient_type = 'email'
 
         # send alert that we got a message
-        print("Sending alert...")
+        logging.info("Sending alert...")
         mail(username, get_alert_recipient(), make_alert_message(message), '',
              mail_server)
 
@@ -421,7 +428,7 @@ def reply():
 
             if existing_recipient:
                 if command == 'unsubscribe':
-                    print('this recipient is unsubscribing :(')
+                    logging.info('This recipient is unsubscribing.')
 
                     # remove recipient from all files
                     if recipient_type == 'sms':
@@ -437,12 +444,13 @@ def reply():
                     else:
                         phone_recipients.remove((number, provider))
 
-                    print('replying with unsubscription message')
+                    logging.info('Replying with unsubscription message...')
                     mail(username, sender, UNSUBSCRIBE_MESSAGE, None,
                          mail_server)
 
                 elif command in ('hourly', 'daily'):
-                    print('this person wants %s cat facts' % command)
+                    logging.info('This person wants {freq} cat facts',
+                                 freq=command)
 
                     # remove user from all groups he might have been part of
                     # previously
@@ -461,38 +469,39 @@ def reply():
                     else:
                         add_email_recipient_to_file(sender, rlist=command)
 
-                    print('replying with message')
+                    logging.info('Replying with message...')
                     text = "You will now receive %s cat facts." % command
                     mail(username, sender, text, None, mail_server)
 
                 elif command == 'invite':
-                    print('this person wants to invite someone')
+                    logging.info('This person wants to invite someone...')
 
                     if len(arguments) == 0:
-                        print("Insufficient arguments")
-                        print("Sending invite usage message")
+                        logging.info("Insufficient arguments")
+                        logging.info("Sending invite usage message")
                         mail(username, sender, INVITE_USAGE_MESSAGE, None,
                             mail_server)
                     else:
                         method = arguments[0]
                         if method == 'sms':
-                            print('this person wants to invite via sms')
+                            logging.info('This person wants to invite via sms')
                             number, provider = arguments[1:3]
-                            print('inviting the number')
+                            logging.info('Inviting the number...')
                             invite_number(number, provider)
                         elif method == 'email':
-                            print('this person wants to invite via email')
+                            logging.info(
+                                'This person wants to invite via email.')
                             email_address = arguments[1]
-                            print('inviting the email')
+                            logging.info('Inviting the email...')
                             invite_email(email_address)
 
                 else:
                     # no command was detected
                     # get a reply and send it in text messages
-                    print("replying to this message with command not found")
+                    logging.info("Replying with command not found message...")
                     for reply_part in split_text(get_reply_message()):
                         #debug output
-                        print(reply_part)
+                        logging.info(reply_part)
 
                         mail(username, sender, reply_part, None, mail_server)
                         time.sleep(DELAY_BETWEEN_MESSAGE_PARTS)
@@ -593,17 +602,15 @@ def main():
     args = parser.parse_args()
 
     if args.action == 'send':
-        print('catfacts sending to %s at %s' %\
-            (args.list, datetime.datetime.now()))
+        logging.info('Sending to {list}...', list=args.list)
         send_fact(args.list)
 
     elif args.action == 'reply':
-        print('catfacts replying at %s' % datetime.datetime.now())
+        logging.info('Replying...')
         reply()
 
     elif args.action == 'invite':
-        print('catfacts inviting via %s at %s' %\
-            (args.method, datetime.datetime.now()))
+        logging.info('Inviting via {method}...', method=args.method)
 
         if args.method == 'sms':
             number = args.number
@@ -616,4 +623,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except:
+        # make sure any exceptions are logged
+        logging.exception("Got exception")
+        raise
