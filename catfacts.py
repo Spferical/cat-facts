@@ -432,7 +432,7 @@ def reply():
                         remove_recipient_from_files(
                             (number, provider), recipient_type)
                     else:
-                        remove_recipient_from_files(email, recipient_type)
+                        remove_recipient_from_files(sender, recipient_type)
 
                     # remove recipient from lists so we treat them properly
                     # if we receive another email near the same time
