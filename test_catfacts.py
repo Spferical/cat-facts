@@ -37,6 +37,10 @@ class TestCatFacts(unittest.TestCase):
             'invite sms foo bar': ('invite', []),
             'invite email foo@example.com': ('invite', ['email',
                                              'foo@example.com']),
+            '[][] invite email (#*&)u90U()#*&)(&*)@(@)@ extra_text[]]]':
+                ('invite', ['email', '(#*&)u90u()#*&)(&*)@(@)@']),
+            '!)(*#$   invite sms 1231231231 AT&t 9102018)(*)*)' :
+                ('invite', ['sms', '1231231231', 'at&t']),
             'invite': ('invite', []),
             'invite email': ('invite', []),
         }
