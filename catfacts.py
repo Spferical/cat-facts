@@ -295,7 +295,7 @@ def get_command_from_text(text):
             command = possible_command
             if command == 'invite':
                 # search for an sms invite
-                match = re.search("invite sms [0-9]{10} .+", text)
+                match = re.search("invite sms [0-9]{10} \S+", text)
                 if match:
                     words = match.group().split()
                     number = words[2]
