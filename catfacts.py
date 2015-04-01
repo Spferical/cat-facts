@@ -482,8 +482,16 @@ def reply():
                         if method == 'sms':
                             logging.info('This person wants to invite via sms')
                             number, provider = arguments[1:3]
-                            logging.info('Inviting the number...')
-                            invite_number(number, provider)
+                            if provider in text_gateways.keys():
+                                logging.info('Inviting the number...')
+                                invite_number(number, provider)
+                            else:
+                                logging.info(
+                                    "Invite fail: do not know provider %s", provider)
+                                mail(username, sender,
+                                     "Invite fail: do not know provider %s"
+                                     % provider,
+                                     None, mail_server)
                         elif method == 'email':
                             logging.info(
                                 'This person wants to invite via email.')
