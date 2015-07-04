@@ -48,6 +48,25 @@ class TestCatFacts(unittest.TestCase):
         for (text, result) in expected.items():
             self.assertEqual(result, catfacts.get_command_from_text(text))
 
+    def test_get_phone_email(self):
+        expected = {
+            # format: (number, provider): result
+            ("1231231234", "verizon"): "1231231234@vtext.com",
+            ("4313412123", "at&t"): "4313412123@txt.att.net",
+            ("9559595959", "att"): "9559595959@txt.att.net",
+            ("1092301238", "sprint"): "1092301238@messaging.sprintpcs.com",
+            ("1203981451", "alltel"): "1203981451@message.alltel.com",
+            ("9123123133", "t-mobile"): "9123123133@tmomail.net",
+            ("5555555555", "tmobile"): "5555555555@tmomail.net",
+        }
+
+        for (number, provider), result in expected.items():
+            self.assertEqual(
+                result, catfacts.get_phone_email(number, provider))
+
+        self.assertRaises(
+            NotImplementedError, catfacts.get_phone_email, '1231231234',
+            'nonexistant-cellphone-company')
 
 if __name__ == '__main__':
     unittest.main()
