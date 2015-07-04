@@ -68,5 +68,19 @@ class TestCatFacts(unittest.TestCase):
             NotImplementedError, catfacts.get_phone_email, '1231231234',
             'nonexistant-cellphone-company')
 
+    def _assert_bad_address(self, address):
+        self.assertTrue(catfacts.is_bad_address(address))
+
+    def _assert_good_address(self, address):
+        self.assertFalse(catfacts.is_bad_address(address))
+
+    def test_is_bad_address(self):
+        self._assert_bad_address('mailer-daemon@googlemail.com')
+        self._assert_bad_address('post_master@vtext.com')
+        self._assert_bad_address('MAILER_DAEMON@email.uscc.net')
+        self._assert_good_address('catlover123@example.com')
+        self._assert_good_address('totally-not-a-bot@gmail.com')
+        self._assert_good_address('IjUsTwAnTsOmEfReEcAtFaCtS@_asdf_.horse')
+
 if __name__ == '__main__':
     unittest.main()

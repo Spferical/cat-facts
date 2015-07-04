@@ -89,6 +89,12 @@ def get_phone_email(phone_number, provider):
         " yet as a provider")
 
 
+def is_bad_address(address):
+    """Returns if the address is someone we don't want to email, namely mailer
+    daemons, postmasters, noreply addresses, etc.
+    We don't want to email other bots!"""
+    regex = "mailer.*daemon|post.*master|no.*reply"
+    return bool(re.search(regex, address, flags=re.IGNORECASE))
 
 
 def split_text(text):
@@ -368,10 +374,7 @@ def reply():
 
     # get all mail in the inbox, not including that from mailer daemons/post
     # masters (which send messagess for mail that was not received)
-    # TODO: find better way to ignore mailer daemon/post master mail
-    result, data = imap_mail.uid('search', None, '(NOT FROM '
-            '"mailer-daemon@googlemail.com" NOT FROM "post_master@vtext.com" '
-            'NOT FROM "MAILER_DAEMON@email.uscc.net")')
+    result, data = imap_mail.uid('search', None, 'ALL')
 
     # login to smtp in preparation for sending mail
     mail_server = login_to_gmail(username, password)
@@ -387,6 +390,10 @@ def reply():
         message = email.message_from_bytes(raw_email)
         # with it, get who sent the email
         sender = message['From']
+
+        # avoid blacklisted senders (noreply, mailer daemons, etc.)
+        if is_bad_address(sender):
+            continue
 
         # find out if the message includes a command
         command, arguments = get_command_from_message(message)
