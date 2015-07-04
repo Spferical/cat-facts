@@ -89,9 +89,6 @@ def get_phone_email(phone_number, provider):
         " yet as a provider")
 
 
-def get_possible_emails(phone_number):
-    return [phone_number + '@' + domain
-            for domain in set(text_gateways.values())]
 
 
 def split_text(text):
